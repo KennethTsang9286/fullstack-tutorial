@@ -1,5 +1,5 @@
 import React from 'react';
-import { useMutation } from '@apollo/react-hooks';
+import { useMutation, useQuery } from '@apollo/react-hooks';
 import gql from 'graphql-tag';
 
 import { GET_LAUNCH_DETAILS } from '../pages/launch';
@@ -10,57 +10,72 @@ import * as LaunchDetailTypes from '../pages/__generated__/LaunchDetails';
 export { GET_LAUNCH_DETAILS };
 
 export const TOGGLE_CART = gql`
-  mutation addOrRemoveFromCart($launchId: ID!) {
-    addOrRemoveFromCart(id: $launchId) @client
-  }
+	mutation addOrRemoveFromCart($launchId: ID!) {
+		addOrRemoveFromCart(id: $launchId) @client
+	}
 `;
 
 export const CANCEL_TRIP = gql`
-  mutation cancel($launchId: ID!) {
-    cancelTrip(launchId: $launchId) {
-      success
-      message
-      launches {
-        id
-        isBooked
-      }
-    }
-  }
+	mutation cancel($launchId: ID!) {
+		cancelTrip(launchId: $launchId) {
+			success
+			message
+			launches {
+				id
+				isBooked
+			}
+		}
+	}
 `;
 
-interface ActionButtonProps extends Partial<LaunchDetailTypes.LaunchDetails_launch> {}
+interface ActionButtonProps
+	extends Partial<LaunchDetailTypes.LaunchDetails_launch> {}
 
-const ActionButton: React.FC<ActionButtonProps> = ({ isBooked, id, isInCart }) => {
-  const [mutate, { loading, error }] = useMutation(
-    isBooked ? CANCEL_TRIP : TOGGLE_CART,
-    {
-      variables: { launchId: id },
-      refetchQueries: [
-        {
-          query: GET_LAUNCH_DETAILS,
-          variables: { launchId: id },
-        },
-      ]
-    }
-  );
+const TEST_GQL = gql`
+	query {
+		launch(id: 93) {
+			id
+			isInCart @client
+			site
+		}
+	}
+`;
 
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p>An error occurred</p>;
+const ActionButton: React.FC<ActionButtonProps> = ({
+	isBooked,
+	id,
+	isInCart,
+}) => {
+	const { data, loading: loading2, error: error2 } = useQuery(TEST_GQL);
+	console.log({ data1: data });
 
-  return (
-    <div>
-      <Button
-        onClick={() => mutate()}
-        data-testid={'action-button'}
-      >
-        {isBooked
-          ? 'Cancel This Trip'
-          : isInCart
-            ? 'Remove from Cart'
-            : 'Add to Cart'}
-      </Button>
-    </div>
-  );
-}
+	const [mutate, { loading, error }] = useMutation(
+		isBooked ? CANCEL_TRIP : TOGGLE_CART,
+		{
+			variables: { launchId: id },
+			refetchQueries: [
+				{
+					query: TEST_GQL,
+				},
+				// { query: GET_LAUNCH_DETAILS, variables: { launchId: id } },
+			],
+		},
+	);
+
+	if (loading) return <p>Loading...</p>;
+	if (error) return <p>An error occurred</p>;
+
+	return (
+		<div>
+			<Button onClick={() => mutate()} data-testid={'action-button'}>
+				{isBooked
+					? 'Cancel This Trip'
+					: isInCart
+					? 'Remove from Cart'
+					: 'Add to Cart'}
+			</Button>
+		</div>
+	);
+};
 
 export default ActionButton;

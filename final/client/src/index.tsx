@@ -16,24 +16,25 @@ import injectStyles from './styles';
 // this can be local or a remote endpoint
 const cache = new InMemoryCache();
 const client: ApolloClient<NormalizedCacheObject> = new ApolloClient({
-  cache,
-  link: new HttpLink({
-    uri: 'http://localhost:4000/graphql',
-    headers: {
-      authorization: localStorage.getItem('token'),
-      'client-name': 'Space Explorer [web]',
-      'client-version': '1.0.0',
-    },
-  }),
-  resolvers,
-  typeDefs,
+	cache,
+	link: new HttpLink({
+		uri: 'http://localhost:4000/graphql',
+		headers: {
+			authorization: localStorage.getItem('token'),
+			'client-name': 'Space Explorer [web]',
+			'client-version': '1.0.0',
+		},
+	}),
+	resolvers,
+	typeDefs,
 });
 
 cache.writeData({
-  data: {
-    isLoggedIn: !!localStorage.getItem('token'),
-    cartItems: [],
-  },
+	data: {
+		isLoggedIn: !!localStorage.getItem('token'),
+		cartItems: [],
+		step: 0,
+	},
 });
 
 /**
@@ -47,21 +48,20 @@ cache.writeData({
  */
 
 const IS_LOGGED_IN = gql`
-  query IsUserLoggedIn {
-    isLoggedIn @client
-  }
+	query IsUserLoggedIn {
+		isLoggedIn @client
+	}
 `;
 
 function IsLoggedIn() {
-  const { data } = useQuery(IS_LOGGED_IN);
-  return data.isLoggedIn ? <Pages /> : <Login />;
+	const { data } = useQuery(IS_LOGGED_IN);
+	return data.isLoggedIn ? <Pages /> : <Login />;
 }
 
 injectStyles();
 ReactDOM.render(
-
-  <ApolloProvider client={client}>
-    <IsLoggedIn />
-  </ApolloProvider>,
-  document.getElementById('root'),
+	<ApolloProvider client={client}>
+		<IsLoggedIn />
+	</ApolloProvider>,
+	document.getElementById('root'),
 );
