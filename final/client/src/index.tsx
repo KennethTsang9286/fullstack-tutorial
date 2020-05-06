@@ -34,6 +34,24 @@ cache.writeData({
 		isLoggedIn: !!localStorage.getItem('token'),
 		cartItems: [],
 		step: 0,
+		forms: [
+			{
+				__typename: 'Form',
+				id: 'Form1',
+				fields: [
+					{
+						__typename: 'FormField',
+						name: 'HelloWorld',
+						value: 'asdasd',
+					},
+					{
+						__typename: 'FormField',
+						name: 'reactSelect',
+						value: 'audi',
+					},
+				],
+			},
+		],
 	},
 });
 

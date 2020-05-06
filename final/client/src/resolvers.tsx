@@ -6,10 +6,24 @@ import * as GetCartItemTypes from './pages/__generated__/GetCartItems';
 import { Resolvers } from 'apollo-client';
 
 export const typeDefs = gql`
+	scalar Any
+
+	type FormField {
+		name: String!
+		value: Any
+	}
+
+	type Form {
+		id: String!
+		fields: [FormField]
+	}
+
 	extend type Query {
 		isLoggedIn: Boolean!
 		cartItems: [ID!]!
 		step: Int!
+		forms: [Form]!
+		getForm(id: String!): Form
 	}
 
 	extend type Launch {
@@ -18,10 +32,8 @@ export const typeDefs = gql`
 
 	extend type Mutation {
 		addOrRemoveFromCart(id: ID!): [ID!]!
-	}
-
-	extend type Mutation {
 		changeStep(step: number!): number
+		setForm(id: String!): Form
 	}
 `;
 
@@ -46,13 +58,40 @@ export const GET_STEP = gql`
 	}
 `;
 
+const GET_FORMS = gql`
+	query {
+		forms @client {
+			id
+			fields {
+				name
+				value
+			}
+		}
+	}
+`;
+
+interface Form {
+	id: string;
+	fields: [
+		{
+			name: string;
+			value: string | number;
+		},
+	];
+}
+
 export const resolvers: AppResolvers = {
 	Query: {
-		step: (_, __, { cache }): number => {
-			const { step } = cache.readQuery({
-				query: GET_STEP,
+		getForm: (_, { id }, { cache }): Form | undefined => {
+			const queryResult = cache.readQuery({
+				query: GET_FORMS,
 			});
-			return step;
+
+			if (queryResult) {
+				return queryResult.forms.find((form: Form) => form.id === id);
+			}
+
+			return undefined;
 		},
 	},
 	Launch: {
