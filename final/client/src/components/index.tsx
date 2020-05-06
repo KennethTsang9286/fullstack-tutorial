@@ -7,3 +7,5 @@ export { default as Loading } from './loading';
 export { default as LoginForm } from './login-form';
 export { default as MenuItem } from './menu-item';
 export { default as PageContainer } from './page-container';
+export { default as Forms } from './Forms';
+export { default as Form } from './Form';
