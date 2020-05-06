@@ -1,5 +1,7 @@
 import React from 'react';
-import Form from './Form';
+import Form1 from './Form1';
+import Form2 from './Form2';
+import Form3 from './Form3';
 // import { GET_STEP } from '../resolvers';
 import { useQuery, useMutation } from '@apollo/react-hooks';
 import gql from 'graphql-tag';
@@ -33,8 +35,15 @@ const Forms = () => {
 	});
 
 	const submit = step < 3 ? () => mutation() : undefined;
-
-	return <Form formName={formName} step={step} submit={submit} />;
+	switch (step) {
+		case 1:
+			return <Form2 formName="Form2" step={1} submit={submit} />;
+		case 2:
+			return <Form3 formName="Form3" step={2} submit={submit} />;
+		case 0:
+		default:
+			return <Form1 formName="Form1" step={0} submit={submit} />;
+	}
 };
 
 export default Forms;
