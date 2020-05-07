@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { Input, Select } from './htmlTag';
 import { DevTool } from 'react-hook-form-devtools';
@@ -30,22 +30,50 @@ interface FormField {
 
 const fieldsToDefaultValue = (fields?: [FormField]) => {
 	if (!fields) {
-		return {};
+		return [];
 	}
-	const output = {} as { [key: string]: any };
-	fields.forEach(({ name, value }: FormField) => {
-		output[name] = value;
-	});
-	return output;
+	return fields.map(({ name, value }: FormField) => ({ [name]: value }));
 };
 
-const FForm: React.FC<any> = ({ formName, step, submit, data }) => {
-	console.log({ data });
-	const { control, handleSubmit } = useForm({
-		defaultValues: fieldsToDefaultValue(data.getForm.fields),
+const query2 = gql`
+	query GetLaunch($id: Int!) {
+		getLaunch(id: $id) @client {
+			id
+			isBooked
+			rocket {
+				id
+				name
+			}
+		}
+	}
+`;
+
+const Form: React.FC<Props> = ({ submit, formName, step }) => {
+	const { data, error, loading } = useQuery(query, {
+		variables: {
+			id: formName,
+		},
 	});
 
+	const { data: data2, error: error2 } = useQuery(query2, {
+		variables: { id: 93 },
+	});
+
+	const { control, handleSubmit, setValue } = useForm({
+		defaultValues: {
+			HelloWorld: '',
+			reactSelect: '',
+		},
+	});
+
+	useEffect(() => {
+		if (data && data.getForm) {
+			setValue(fieldsToDefaultValue(data.getForm.fields));
+		}
+	}, [data]);
+
 	const onSubmit = submit ? submit : (data: any) => console.log(data);
+	// const onSubmit = (data: any) => console.log(data);
 
 	return (
 		<>
@@ -56,12 +84,7 @@ const FForm: React.FC<any> = ({ formName, step, submit, data }) => {
 				Step {step} - {formName}
 			</h1>
 			<form onSubmit={handleSubmit(onSubmit)}>
-				<Controller
-					as={Input}
-					name="HelloWorld"
-					control={control}
-					// defaultValue=""
-				/>
+				<Controller as={Input} name="HelloWorld" control={control} />
 				<Controller
 					as={Select}
 					name="reactSelect"
@@ -79,26 +102,12 @@ const FForm: React.FC<any> = ({ formName, step, submit, data }) => {
 							<option value="audi">Audi</option>
 						</>
 					}
-					// defaultValue={''}
 				/>
 
-				<input type="submit" />
+				{/* <input type="submit" /> */}
+				<button onClick={onSubmit}>asdads</button>
 			</form>
 		</>
 	);
-};
-
-const Form: React.FC<Props> = (props) => {
-	const { data, error, loading } = useQuery(query, {
-		variables: {
-			id: props.formName,
-		},
-	});
-
-	if (loading) {
-		return <h1>Loading</h1>;
-	} else {
-		return <FForm data={data} {...props} />;
-	}
 };
 export default Form;

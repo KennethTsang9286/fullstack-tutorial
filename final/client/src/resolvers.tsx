@@ -3,6 +3,7 @@ import { GET_CART_ITEMS } from './pages/cart';
 import * as LaunchTileTypes from './pages/__generated__/LaunchTile';
 import { ApolloCache } from 'apollo-cache';
 import * as GetCartItemTypes from './pages/__generated__/GetCartItems';
+import { GetLaunchList_launches_launches } from './pages/__generated__/GetLaunchList';
 import { Resolvers } from 'apollo-client';
 
 export const typeDefs = gql`
@@ -24,6 +25,7 @@ export const typeDefs = gql`
 		step: Int!
 		forms: [Form]!
 		getForm(id: String!): Form
+		getLaunch(id: String!): Launch
 	}
 
 	extend type Launch {
@@ -80,6 +82,17 @@ interface Form {
 	];
 }
 
+const LAUNCH_FRAG = gql`
+	fragment myLaunch on Launch {
+		id
+		isBooked
+		rocket {
+			id
+			name
+		}
+	}
+`;
+
 export const resolvers: AppResolvers = {
 	Query: {
 		getForm: (_, { id }, { cache }): Form | undefined => {
@@ -92,6 +105,13 @@ export const resolvers: AppResolvers = {
 			}
 
 			return undefined;
+		},
+		getLaunch: (_, { id }, { cache }) => {
+			const queryResult = cache.readFragment({
+				id: `Launch:${id}`,
+				fragment: LAUNCH_FRAG,
+			});
+			return queryResult || {};
 		},
 	},
 	Launch: {

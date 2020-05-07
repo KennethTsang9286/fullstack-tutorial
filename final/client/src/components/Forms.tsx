@@ -36,13 +36,13 @@ const Forms = () => {
 
 	const submit = step < 3 ? () => mutation() : undefined;
 	switch (step) {
-		case 1:
-			return <Form2 formName="Form2" step={1} submit={submit} />;
 		case 2:
-			return <Form3 formName="Form3" step={2} submit={submit} />;
-		case 0:
+			return <Form2 formName="Form2" step={step} submit={submit} />;
+		case 3:
+			return <Form3 formName="Form3" step={step} submit={submit} />;
+		case 1:
 		default:
-			return <Form1 formName="Form1" step={0} submit={submit} />;
+			return <Form1 formName="Form1" step={step} submit={submit} />;
 	}
 };
 

@@ -33,7 +33,7 @@ cache.writeData({
 	data: {
 		isLoggedIn: !!localStorage.getItem('token'),
 		cartItems: [],
-		step: 0,
+		step: 1,
 		forms: [
 			{
 				__typename: 'Form',
