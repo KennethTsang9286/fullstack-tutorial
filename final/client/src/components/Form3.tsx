@@ -1,36 +1,93 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { Input, Select } from './htmlTag';
 import { DevTool } from 'react-hook-form-devtools';
-
+import { useQuery } from '@apollo/react-hooks';
+import gql from 'graphql-tag';
 interface Props {
 	formName: string;
 	step: number;
-	submit?: (data: any) => void;
+	submit?: (data: any, data2: any) => void;
+	toPrevious: () => void;
 }
 
-const Form: React.FC<Props> = ({ formName, step, submit }) => {
-	const { control, handleSubmit } = useForm({
-		defaultValues: {
-			HelloWorld: 'plz',
-			reactSelect: 'audi',
+const query = gql`
+	query GET_FORM($id: String!) {
+		getForm(id: $id) @client {
+			id
+			fields {
+				name
+				value
+			}
+		}
+	}
+`;
+
+interface FormField {
+	name: string;
+	value: any;
+}
+
+const fieldsToDefaultValue = (fields?: [FormField]) => {
+	if (!fields) {
+		return [];
+	}
+	return fields.map(({ name, value }: FormField) => ({ [name]: value }));
+};
+
+const query2 = gql`
+	query GetLaunch($id: Int!) {
+		getLaunch(id: $id) @client {
+			id
+			isBooked
+			rocket {
+				id
+				name
+			}
+		}
+	}
+`;
+
+const Form: React.FC<Props> = ({ submit, formName, step, toPrevious }) => {
+	const { data, error, loading } = useQuery(query, {
+		variables: {
+			id: formName,
 		},
 	});
-	const onSubmit = submit ? submit : (data: any) => console.log(data);
+
+	const { data: data2, error: error2 } = useQuery(query2, {
+		variables: { id: 93 },
+	});
+
+	const { control, handleSubmit, setValue, getValues } = useForm({
+		defaultValues: {
+			HelloWorld: '',
+			reactSelect: '',
+		},
+	});
+
+	useEffect(() => {
+		if (data && data.getForm) {
+			setValue(fieldsToDefaultValue(data.getForm.fields));
+		}
+	}, [data]);
+
+	const onSubmit = submit
+		? () => {
+				submit(getValues, formName);
+		  }
+		: (data: any) => console.log(data);
 
 	return (
 		<>
 			{process.env.NODE_ENV !== 'production' && (
 				<DevTool control={control} />
 			)}
-			<h1>Step {step}</h1>
+			<h1>
+				Step {step} - {formName}
+			</h1>
 			<form onSubmit={handleSubmit(onSubmit)}>
-				<Controller
-					as={Input}
-					name="HelloWorld"
-					control={control}
-					// defaultValue=""
-				/>
+				<Controller as={Input} name="HelloWorld" control={control} />
 				<Controller
 					as={Select}
 					name="reactSelect"
@@ -48,10 +105,11 @@ const Form: React.FC<Props> = ({ formName, step, submit }) => {
 							<option value="audi">Audi</option>
 						</>
 					}
-					// defaultValue={''}
 				/>
 
-				<input type="submit" />
+				{/* <input type="submit" /> */}
+				<button onClick={onSubmit}>next</button>
+				<button onClick={toPrevious}>previous</button>
 			</form>
 		</>
 	);

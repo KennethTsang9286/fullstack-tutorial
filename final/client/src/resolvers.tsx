@@ -72,6 +72,17 @@ const GET_FORMS = gql`
 	}
 `;
 
+const GET_FORM = gql`
+	query GET_FORM($id: String!) {
+		getForm(id: $id) @client {
+			id
+			fields {
+				name
+				value
+			}
+		}
+	}
+`;
 interface Form {
 	id: string;
 	fields: [
@@ -154,6 +165,75 @@ export const resolvers: AppResolvers = {
 		changeStep: (_, { step }: { step: number }, { cache }): number => {
 			cache.writeQuery({ query: GET_STEP, data: { step } });
 			return step;
+		},
+		// dont update forms
+		// setForm: (_, { id, fields }: Form, { cache }) => {
+		// 	const getForm = {
+		// 		__typename: 'Form',
+		// 		id,
+		// 		fields: fields.map((field) => ({
+		// 			__typename: 'FormField',
+		// 			...field,
+		// 		})),
+		// 	};
+
+		// 	cache.writeQuery({
+		// 		query: GET_FORM,
+		// 		variables: {
+		// 			id,
+		// 		},
+		// 		data: {
+		// 			getForm,
+		// 		},
+		// 	});
+
+		// 	return getForm;
+		// },
+		setForm: (_, { id, fields }: Form, { cache }) => {
+			const getForm = {
+				__typename: 'Form',
+				id,
+				fields: fields.map((field) => ({
+					__typename: 'FormField',
+					...field,
+				})),
+			};
+
+			const queryResult = cache.readQuery({
+				query: GET_FORMS,
+			}) as any;
+			if (queryResult) {
+				const { forms } = queryResult;
+				const index = forms.findIndex(
+					(form: { id: string }) => form.id === id,
+				);
+				const newForm = {
+					__typename: 'Form',
+					id,
+					fields: fields.map((field) => ({
+						__typename: 'FormField',
+						...field,
+					})),
+				};
+
+				const oldForms = JSON.parse(JSON.stringify(forms));
+				let data;
+				if (index > -1) {
+					data = oldForms;
+					data[index] = newForm;
+				} else {
+					data = [...oldForms, newForm];
+				}
+
+				cache.writeQuery({
+					query: GET_FORMS,
+					data: {
+						forms: data,
+					},
+				});
+				return data;
+			}
+			return [];
 		},
 	},
 };

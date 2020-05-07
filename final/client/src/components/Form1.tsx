@@ -4,11 +4,10 @@ import { Input, Select } from './htmlTag';
 import { DevTool } from 'react-hook-form-devtools';
 import { useQuery } from '@apollo/react-hooks';
 import gql from 'graphql-tag';
-
 interface Props {
 	formName: string;
 	step: number;
-	submit?: (data: any) => void;
+	submit?: (data: any, data2: any) => void;
 }
 
 const query = gql`
@@ -59,7 +58,7 @@ const Form: React.FC<Props> = ({ submit, formName, step }) => {
 		variables: { id: 93 },
 	});
 
-	const { control, handleSubmit, setValue } = useForm({
+	const { control, handleSubmit, setValue, getValues } = useForm({
 		defaultValues: {
 			HelloWorld: '',
 			reactSelect: '',
@@ -72,8 +71,11 @@ const Form: React.FC<Props> = ({ submit, formName, step }) => {
 		}
 	}, [data]);
 
-	const onSubmit = submit ? submit : (data: any) => console.log(data);
-	// const onSubmit = (data: any) => console.log(data);
+	const onSubmit = submit
+		? () => {
+				submit(getValues, formName);
+		  }
+		: (data: any) => console.log(data);
 
 	return (
 		<>

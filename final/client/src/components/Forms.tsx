@@ -6,7 +6,7 @@ import Form3 from './Form3';
 import { useQuery, useMutation } from '@apollo/react-hooks';
 import gql from 'graphql-tag';
 
-const GET_STEP = gql`
+export const GET_STEP = gql`
 	query GetStep {
 		step @client
 	}
@@ -18,7 +18,18 @@ const SET_STEP = gql`
 	}
 `;
 
-const GET_FORM = gql`
+export const TO_NEXT_STEP = gql`
+	mutation toNextStep(
+		$step: Int!
+		$formName: String!
+		$fields: [FormField]!
+	) {
+		changeStep(step: $step) @client
+		setForm(id: $formName, fields: $fields) @client
+	}
+`;
+
+export const GET_FORM = gql`
 	query {
 		forms @client {
 			id
@@ -31,28 +42,65 @@ const GET_FORM = gql`
 `;
 
 const Forms = () => {
-	const formName = 'form1';
-
 	const { data, loading: stepLoading, error: stepError } = useQuery(GET_STEP);
 	const { data: formsData, error: formsError } = useQuery(GET_FORM);
 	const step = data?.step || 0;
 
-	const [mutation, { loading, error }] = useMutation(SET_STEP, {
-		variables: { step: step + 1 },
+	const [mutation, { loading, error }] = useMutation(TO_NEXT_STEP, {
 		refetchQueries: [
 			{
 				query: GET_STEP,
 			},
+			{
+				query: GET_FORM,
+			},
 		],
 	});
 
-	const submit = step < 3 ? () => mutation() : undefined;
+	const submit =
+		step < 3
+			? (getValues: () => any, formName: string) => {
+					const values = getValues() as { [key: string]: any };
+					const fields = Object.keys(values).map((name) => ({
+						name,
+						value: values[name],
+					})) as any[];
+					mutation({
+						variables: {
+							step: step + 1,
+							formName,
+							fields,
+						},
+					});
+			  }
+			: undefined;
+
+	const [toPrevious] = useMutation(SET_STEP, {
+		variables: {
+			step: step - 1,
+		},
+	});
+
 	const content = () => {
 		switch (step) {
 			case 2:
-				return <Form2 formName="Form2" step={step} submit={submit} />;
+				return (
+					<Form2
+						formName="Form2"
+						step={step}
+						submit={submit}
+						toPrevious={toPrevious}
+					/>
+				);
 			case 3:
-				return <Form3 formName="Form3" step={step} submit={submit} />;
+				return (
+					<Form3
+						formName="Form3"
+						step={step}
+						submit={submit}
+						toPrevious={toPrevious}
+					/>
+				);
 			case 1:
 			default:
 				return <Form1 formName="Form1" step={step} submit={submit} />;
