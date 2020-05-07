@@ -18,11 +18,23 @@ const SET_STEP = gql`
 	}
 `;
 
+const GET_FORM = gql`
+	query {
+		forms @client {
+			id
+			fields {
+				name
+				value
+			}
+		}
+	}
+`;
+
 const Forms = () => {
 	const formName = 'form1';
 
 	const { data, loading: stepLoading, error: stepError } = useQuery(GET_STEP);
-
+	const { data: formsData, error: formsError } = useQuery(GET_FORM);
 	const step = data?.step || 0;
 
 	const [mutation, { loading, error }] = useMutation(SET_STEP, {
@@ -35,15 +47,26 @@ const Forms = () => {
 	});
 
 	const submit = step < 3 ? () => mutation() : undefined;
-	switch (step) {
-		case 2:
-			return <Form2 formName="Form2" step={step} submit={submit} />;
-		case 3:
-			return <Form3 formName="Form3" step={step} submit={submit} />;
-		case 1:
-		default:
-			return <Form1 formName="Form1" step={step} submit={submit} />;
-	}
+	const content = () => {
+		switch (step) {
+			case 2:
+				return <Form2 formName="Form2" step={step} submit={submit} />;
+			case 3:
+				return <Form3 formName="Form3" step={step} submit={submit} />;
+			case 1:
+			default:
+				return <Form1 formName="Form1" step={step} submit={submit} />;
+		}
+	};
+
+	return (
+		<div>
+			{content()}
+			{formsData && formsData.forms && (
+				<p>{JSON.stringify(formsData.forms)}</p>
+			)}
+		</div>
+	);
 };
 
 export default Forms;
